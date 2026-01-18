@@ -323,6 +323,6 @@ npm run dev
 
 ## 👨‍💻 Author
 
-Built by Zee for ReachInbox Hiring Assignment.
+Built by Parag Vastrad for ReachInbox Hiring Assignment.
 
 ⭐ **If you like this repo, consider giving it a star!**
