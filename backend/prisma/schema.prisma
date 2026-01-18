@@ -1,0 +1,64 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum AuthProvider {
+  GOOGLE
+  LOCAL
+}
+
+enum EmailStatus {
+  SCHEDULED
+  PROCESSING
+  SENT
+  FAILED
+}
+
+model User {
+  id           String       @id @default(uuid())
+  googleId     String?      @unique
+  name         String
+  email        String       @unique
+  avatar       String?
+  passwordHash String?
+  provider     AuthProvider @default(GOOGLE)
+  createdAt    DateTime     @default(now())
+}
+
+model EmailSender {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  smtpHost  String
+  smtpPort  Int
+  smtpUser  String
+  smtpPass  String
+  createdAt DateTime @default(now())
+
+  emails ScheduledEmail[]
+}
+
+model ScheduledEmail {
+  id        String      @id @default(uuid())
+  senderId  String
+  sender    EmailSender @relation(fields: [senderId], references: [id])
+
+  to        String
+  subject   String
+  body      String
+  sendAt    DateTime
+
+  status    EmailStatus @default(SCHEDULED)
+  messageId String?
+  previewUrl String?
+  error     String?
+  attempts  Int         @default(0)
+
+  createdAt DateTime @default(now())
+  sentAt    DateTime?
+}
