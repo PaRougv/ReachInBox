@@ -142,7 +142,187 @@ This system survives restarts because:
 ## ✅ Rate Limiting & Concurrency Implementation
 
 ### ✅ Worker Concurrency
-The worker uses a configurable concurrency:
+The worker uses a configurable concurrency via environment variables:
 
 ```env
 WORKER_CONCURRENCY=5
+MIN_DELAY_BETWEEN_EMAILS_MS=2000
+MAX_EMAILS_PER_HOUR_PER_SENDER=200
+```
+
+---
+
+## 🐳 Running with Docker (Redis + Postgres)
+
+This project uses Docker for local infrastructure.
+
+### Start Infrastructure
+
+From root folder:
+
+```bash
+docker compose up -d
+```
+
+**Services started:**
+- Redis → `localhost:6379`
+- PostgreSQL → `localhost:5432`
+
+---
+
+## ⚙️ Backend Setup (Express + Redis + DB + BullMQ Worker)
+
+### 1. Install Dependencies
+
+```bash
+cd backend
+npm install
+```
+
+### 2. Configure Environment Variables
+
+Create `backend/.env`:
+
+```env
+PORT=4000
+
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/reachinbox
+
+FRONTEND_URL=http://localhost:5173
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+QUEUE_NAME=email-scheduler
+WORKER_CONCURRENCY=5
+
+MIN_DELAY_BETWEEN_EMAILS_MS=2000
+MAX_EMAILS_PER_HOUR_PER_SENDER=200
+
+SESSION_SECRET=some_super_secret_value
+
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
+GOOGLE_CALLBACK_URL=http://localhost:4000/auth/google/callback
+```
+
+**Important:** Google OAuth Redirect URI must be set to:
+```
+http://localhost:4000/auth/google/callback
+```
+
+### 3. Run Prisma Migrations
+
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
+
+### 4. Start Backend
+
+```bash
+npm run dev
+```
+
+**Backend runs on:** 📍 http://localhost:4000
+
+---
+
+## 🖥 Frontend Setup
+
+### 1. Install Dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+### 2. Start Frontend
+
+```bash
+npm run dev
+```
+
+**Frontend runs on:** 📍 http://localhost:5173
+
+---
+
+## ✉️ Ethereal Email Setup (Fake SMTP)
+
+This project uses Ethereal Email for safe email testing.
+
+Instead of manually creating accounts, you can generate senders automatically using:
+
+### API to Create Sender
+
+```
+POST /senders/create-ethereal
+```
+
+This uses `nodemailer.createTestAccount()`. The sender is stored in DB and can be selected in the Compose modal.
+
+**Sent emails return a preview URL, viewable in your browser.**
+
+---
+
+## 🔌 API Endpoints
+
+### Auth
+- `GET /auth/me` → current logged-in user
+- `POST /auth/logout` → logout
+
+### Google OAuth
+- `GET /auth/google`
+- `GET /auth/google/callback`
+
+### Local Auth (Bonus)
+- `POST /auth/local/register`
+- `POST /auth/local/login`
+
+### Senders
+- `GET /senders`
+- `POST /senders/create-ethereal`
+
+### Emails
+- `POST /emails/bulk-schedule`
+- `GET /emails/scheduled`
+- `GET /emails/sent`
+
+---
+
+## ✅ Quick Start Commands (Full Setup)
+
+From root folder:
+
+```bash
+# 1) Start infrastructure
+docker compose up -d
+
+# 2) Run backend
+cd backend
+npm install
+npx prisma migrate dev
+npm run dev
+
+# 3) Run frontend (new terminal)
+cd ../frontend
+npm install
+npm run dev
+```
+
+---
+
+## 📝 Notes
+
+- This project intentionally avoids cron jobs
+- BullMQ delayed jobs ensure schedule reliability
+- Redis ensures queue persistence
+- DB ensures long-term tracking and idempotency
+
+---
+
+## 👨‍💻 Author
+
+Built by Zee for ReachInbox Hiring Assignment.
+
+⭐ **If you like this repo, consider giving it a star!**
